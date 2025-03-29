@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GROOT JI - AI চ্যাট বট</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Base Styles */
+        :root {
+            --primary: #99BC85;
+            --secondary: #88a873;
+            --accent: #E4EFE7;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --white: #ffffff;
+            --bot-bubble: #FDFAF6;
+            --user-bubble: #E4EFE7;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Noto Sans Bengali', Roboto, sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.5;
+            overscroll-behavior-y: contain;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            max-width: 100%;
+            background-color: var(--white);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* Header Styles */
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background-color: var(--primary);
+            color: var(--white);
+            box-shadow: var(--shadow-md);
+            z-index: 10;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .chat-header h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .language-switch {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .language-switch button {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .language-switch button.active {
+            background-color: var(--white);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Teach Me Button */
+        .teach-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-md);
+            border: none;
+            background-color: var(--primary);
+            color: var(--white);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .teach-btn:hover {
+            background-color: var(--secondary);
+        }
+
+        .teach-btn i {
+            font-size: 0.9rem;
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background-color: var(--light);
+            scroll-behavior: smooth;
+        }
+
+        /* Message Bubbles */
+        .message {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            font-size: 0.95rem;
+            word-break: break-word;
+            box-shadow: var(--shadow-sm);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: var(--bot-bubble);
+            border-bottom-left-radius: 4px;
+            color: var(--dark);
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--user-bubble);
+            border-bottom-right-radius: 4px;
+            color: var(--dark);
+        }
+
+        .message-time {
+            display: block;
+            font-size: 0.65rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+
+        /* Chat Input */
+        .chat-input {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background-color: var(--white);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            z-index: 5;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: var(--radius-lg);
+            outline: none;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            min-height: 3rem;
+            background-color: var(--light);
+        }
+
+        .chat-input input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(153, 188, 133, 0.2);
+        }
+
+        .send-btn {
+            width: 3rem;
+            height: 3rem;
+            border: none;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: var(--white);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+        }
+
+        .send-btn.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .send-btn:hover {
+            background-color: var(--secondary);
+        }
+
+        .send-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            padding: 0.75rem 1rem;
+            background-color: var(--bot-bubble);
+            border-radius: var(--radius-md);
+            align-self: flex-start;
+            margin: 0 1rem 0.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .typing-indicator span {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-right: 0.5rem;
+        }
+
+        .dots {
+            display: inline-flex;
+            align-items: center;
+            height: 1rem;
+        }
+
+        .dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: var(--primary);
+            border-radius: 50%;
+            margin: 0 0.15rem;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) { animation-delay: 0s; }
+        .dot:nth-child(2) { animation-delay: 0.3s; }
+        .dot:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 28rem;
+            background-color: var(--white);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 2rem;
+            height: 2rem;
+            border: none;
+            background: none;
+            font-size: 1.5rem;
+            color: var(--gray);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: var(--dark);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+        }
+
+        .form-group textarea {
+            min-height: 6rem;
+            resize: vertical;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            background-color: var(--primary);
+            color: var(--white);
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .save-btn:hover {
+            background-color: var(--secondary);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 480px) {
+            .chat-header {
+                padding: 0.5rem;
+            }
+            
+            .chat-header h1 {
+                font-size: 1rem;
+            }
+            
+            .teach-btn span {
+                display: none;
+            }
+            
+            .teach-btn {
+                padding: 0.5rem;
+                width: 2.5rem;
+                height: 2.5rem;
+                border-radius: 50%;
+                justify-content: center;
+            }
+            
+            .language-switch button {
+                padding: 0.2rem 0.6rem;
+                font-size: 0.7rem;
+            }
+            
+            .chat-messages {
+                padding: 0.75rem;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 0.6rem 0.9rem;
+                font-size: 0.9rem;
+            }
+            
+            .chat-input {
+                padding: 0.5rem;
+            }
+            
+            .chat-input input {
+                padding: 0.6rem 0.9rem;
+                font-size: 0.9rem;
+            }
+            
+            .modal-content {
+                padding: 1.25rem;
+            }
+        }
+
+        /* iOS Safe Area Support */
+        @supports (padding: max(0px)) {
+            .chat-container {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            
+            .chat-input {
+                padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+    </head>
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            <div class="header-title">
+                <h1>GROOT JI</h1>
+                <div class="language-switch">
+                    <button id="lang-bn" class="active">বাংলা</button>
+                    <button id="lang-en">English</button>
+                </div>
+            </div>
+            <button id="teach-btn" class="teach-btn">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Teach Me</span>
+            </button>
+        </header>
+        
+        <main class="chat-messages" id="chat-messages">
+            <!-- চ্যাট মেসেজ এখানে যোগ হবে -->
+        </main>
+        
+        <footer class="chat-input">
+            <input type="text" id="user-input" placeholder="আপনার বার্তা লিখুন..." autofocus>
+            <button id="send-btn" class="send-btn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </footer>
+        
+        <div class="typing-indicator" id="typing-indicator">
+            <span>GROOT is typing</span>
+            <div class="dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Teach Modal -->
+    <div class="modal" id="teach-modal">
+        <div class="modal-content">
+            <button class="close-btn">&times;</button>
+            <h2 id="teach-title">আমাকে শিখান</h2>
+            <div class="form-group">
+                <label id="question-label" for="question-input">প্রশ্ন:</label>
+                <input type="text" id="question-input" placeholder="প্রশ্ন লিখুন">
+            </div>
+            <div class="form-group">
+                <label id="answer-label" for="answer-input">উত্তর:</label>
+                <textarea id="answer-input" placeholder="উত্তর লিখুন"></textarea>
+            </div>
+            <button id="save-knowledge-btn" class="save-btn">
+                <i class="fas fa-save"></i>
+                <span>জ্ঞান সংরক্ষণ করুন</span>
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Language management
+        let currentLanguage = 'bn';
+        const translations = {
+            bn: {
+                placeholder: "আপনার বার্তা লিখুন...",
+                teachBtn: "Teach Me",
+                typing: "GROOT টাইপ করছে",
+                teachTitle: "আমাকে শিখান",
+                questionLabel: "প্রশ্ন:",
+                questionPlaceholder: "প্রশ্ন লিখুন",
+                answerLabel: "উত্তর:",
+                answerPlaceholder: "উত্তর লিখুন",
+                saveBtn: "জ্ঞান সংরক্ষণ করুন",
+                unknownAnswer: "আমার এই উত্তর জানা নাই, আমাকে শিখাতে হলে Teach Me বাটন এ ক্লিক করুন",
+                welcomeMessage: "হ্যালো! আমি কিভাবে আপনাকে সাহায্য করতে পারি?"
+            },
+            en: {
+                placeholder: "Type your message...",
+                teachBtn: "Teach Me",
+                typing: "GROOT is typing",
+                teachTitle: "Teach Me",
+                questionLabel: "Question:",
+                questionPlaceholder: "Enter question",
+                answerLabel: "Answer:",
+                answerPlaceholder: "Enter answer",
+                saveBtn: "Save Knowledge",
+                unknownAnswer: "I don't know this answer. Please click the Teach Me button to teach me.",
+                welcomeMessage: "Hello! How can I assist you today?"
+            }
+        };
+
+        // Knowledge base
+        let knowledgeBase = JSON.parse(localStorage.getItem('knowledgeBase')) || {
+            bn: {},
+            en: {}
+        };
+
+        // DOM Elements
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const teachBtn = document.getElementById('teach-btn');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const langBnBtn = document.getElementById('lang-bn');
+        const langEnBtn = document.getElementById('lang-en');
+        const teachModal = document.getElementById('teach-modal');
+        const closeModalBtn = document.querySelector('.close-btn');
+        const saveKnowledgeBtn = document.getElementById('save-knowledge-btn');
+        const questionInput = document.getElementById('question-input');
+        const answerInput = document.getElementById('answer-input');
+        const teachTitle = document.getElementById('teach-title');
+        const questionLabel = document.getElementById('question-label');
+        const answerLabel = document.getElementById('answer-label');
+
+        // Initialize chat
+        function initChat() {
+            updateUIForLanguage();
+            addMessage('bot', translations[currentLanguage].welcomeMessage);
+            
+            // Disable send button initially
+            sendBtn.classList.remove('active');
+            userInput.addEventListener('input', () => {
+                if (userInput.value.trim() === '') {
+                    sendBtn.classList.remove('active');
+                } else {
+                    sendBtn.classList.add('active');
+                }
+            });
+        }
+
+        // Update UI elements
+        function updateUIForLanguage() {
+            userInput.placeholder = translations[currentLanguage].placeholder;
+            teachBtn.innerHTML = `<i class="fas fa-graduation-cap"></i><span>${translations[currentLanguage].teachBtn}</span>`;
+            document.querySelector('.typing-indicator span').textContent = translations[currentLanguage].typing;
+            teachTitle.textContent = translations[currentLanguage].teachTitle;
+            questionLabel.textContent = translations[currentLanguage].questionLabel;
+            questionInput.placeholder = translations[currentLanguage].questionPlaceholder;
+            answerLabel.textContent = translations[currentLanguage].answerLabel;
+            answerInput.placeholder = translations[currentLanguage].answerPlaceholder;
+            saveKnowledgeBtn.innerHTML = `<i class="fas fa-save"></i><span>${translations[currentLanguage].saveBtn}</span>`;
+        }
+
+        // Add message to chat
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `${sender}-message`);
+            
+            const messageText = document.createElement('div');
+            messageText.textContent = text;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.classList.add('message-time');
+            const now = new Date();
+            timeDiv.textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            messageDiv.appendChild(messageText);
+            messageDiv.appendChild(timeDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Show typing indicator
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'flex';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        // Process user input
+        function processUserInput() {
+            const inputText = userInput.value.trim();
+            if (inputText === '') return;
+            
+            addMessage('user', inputText);
+            userInput.value = '';
+            sendBtn.classList.remove('active');
+            
+            showTypingIndicator();
+            
+            const delay = 1000 + Math.random() * 2000;
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = generateResponse(inputText);
+                addMessage('bot', response);
+            }, delay);
+        }
+
+        // Generate AI response
+        function generateResponse(input) {
+            const knowledge = knowledgeBase[currentLanguage];
+            const lowerInput = input.toLowerCase();
+            
+            if (knowledge[lowerInput]) {
+                return knowledge[lowerInput];
+            }
+            
+            for (const question in knowledge) {
+                if (lowerInput.includes(question.toLowerCase()) || question.toLowerCase().includes(lowerInput)) {
+                    return knowledge[question];
+                }
+            }
+            
+            return translations[currentLanguage].unknownAnswer;
+        }
+
+        // Save new knowledge
+        function saveNewKnowledge() {
+            const question = questionInput.value.trim();
+            const answer = answerInput.value.trim();
+            
+            if (question === '' || answer === '') {
+                alert(currentLanguage === 'bn' ? 'প্রশ্ন এবং উত্তর উভয়ই প্রয়োজন' : 'Both question and answer are required');
+                return;
+            }
+            
+            knowledgeBase[currentLanguage][question] = answer;
+            localStorage.setItem('knowledgeBase', JSON.stringify(knowledgeBase));
+            
+            questionInput.value = '';
+            answerInput.value = '';
+            teachModal.style.display = 'none';
+            
+            addMessage('bot', currentLanguage === 'bn' 
+                ? `ধন্যবাদ! আমি এখন "${question}" সম্পর্কে জানি।` 
+                : `Thank you! I now know about "${question}".`);
+        }
+
+        // Event Listeners
+        sendBtn.addEventListener('click', processUserInput);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                processUserInput();
+            }
+        });
+
+        teachBtn.addEventListener('click', () => {
+            teachModal.style.display = 'flex';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            teachModal.style.display = 'none';
+        });
+
+        saveKnowledgeBtn.addEventListener('click', saveNewKnowledge);
+
+        window.addEventListener('click', (e) => {
+            if (e.target === teachModal) {
+                teachModal.style.display = 'none';
+            }
+        });
+
+        // Language switch
+        langBnBtn.addEventListener('click', () => {
+            currentLanguage = 'bn';
+            langBnBtn.classList.add('active');
+            langEnBtn.classList.remove('active');
+            updateUIForLanguage();
+        });
+
+        langEnBtn.addEventListener('click', () => {
+            currentLanguage = 'en';
+            langEnBtn.classList.add('active');
+            langBnBtn.classList.remove('active');
+            updateUIForLanguage();
+        });
+
+        // Initialize chat
+        window.addEventListener('DOMContentLoaded', initChat);
+    </script>
+</body>
+</html>
